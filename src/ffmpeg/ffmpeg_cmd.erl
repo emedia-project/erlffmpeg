@@ -1,0 +1,21 @@
+-module(ffmpeg_cmd).
+
+-export([execute/1]).
+
+execute(Cmd) ->
+  Opt = [stream, exit_status, use_stdio,
+         stderr_to_stdout, in, eof],
+  P = open_port({spawn, Cmd}, Opt),
+  get_cmd_data(P, []).
+
+get_cmd_data(P, D) ->
+  receive
+    {P, {data, D1}} ->
+      get_cmd_data(P, [D|D1]);
+    {P, eof} ->
+      port_close(P),
+      receive
+        {P, {exit_status, N}} ->
+          {N, lists:reverse(D)}
+      end
+  end.

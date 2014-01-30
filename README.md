@@ -1,0 +1,5 @@
+# erlFFMpeg
+
+ffmpeg for Erlang
+
+
