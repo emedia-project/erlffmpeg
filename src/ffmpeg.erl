@@ -129,10 +129,12 @@ do_transcoding(FFMpeg, Movie, Output, Options) ->
 %% Public hidden fonctions
 %% -------------------------------------------------------------------
 
+%% @hidden
 start_trancode([_FFMpeg, _Movie, _Output, _Options]) ->
   % TODO
   ffmpeg:stop_transcode().
 
+%% @hidden
 stop_transcode() ->
   gen_server:call(?SERVER, {stop_transcode}).
 

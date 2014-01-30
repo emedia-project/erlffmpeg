@@ -5,3 +5,5 @@ ebin
 erl_crash.dump
 .eunit
 doc
+log
+*.png

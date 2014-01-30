@@ -23,7 +23,7 @@ gen-doc: clean-doc
 	@mkdir doc
 	@$(REBAR) doc skip_deps=true
 
-clean-doc: doc
+clean-doc: 
 	@rm -rf doc
 
 dev: compile
