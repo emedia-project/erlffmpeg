@@ -15,9 +15,12 @@
   transcode/3,
   transcoding/0,
   screenshot/2,
-  screenshot/3
+  screenshot/3,
+  to_html5_webm/2,
+  to_html5_mp4/2,
+  to_html5_ogg/2
   ]).
--export([start_trancode/1, stop_transcode/0]).
+-export([start_trancode/4, stop_transcode/0]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -54,6 +57,15 @@ screenshot(Movie, Output) ->
 screenshot(Movie, Output, Options) ->
   gen_server:call(?SERVER, {screenshot, Movie, Output, Options}).
 
+to_html5_webm(Input, Output) ->
+  transcode(Input, Output, [{output_format, "webm"}, {vcodec, "libvpx"}, {output_acodec, "libvorbis"}, {output_frame_size, "640x360"}]).
+
+to_html5_mp4(Input, Output) ->
+  transcode(Input, Output, [{output_format, "mp4"}, {vcodec, "libx264"}, {output_acodec, "libfaac"}, {output_frame_size, "640x360"}]).
+
+to_html5_ogg(Input, Output) ->
+  transcode(Input, Output, [{vcodec, "libtheora"}, {output_acodec, "libvorbis"}, {output_frame_size, "640x360"}]).
+
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
@@ -82,9 +94,8 @@ handle_call({stop_transcode}, _From, State) ->
   {reply, ok, State#ffmpeg{transcoding = false}};
 
 handle_call({screenshot, Movie, Output, Options}, _From, #ffmpeg{ffmpeg_path = FFMpeg} = State) ->
-  OptionsStr = gen_options(Movie, Output, Options, [{yes, true}, {duration, 1}, {output_format, "mjpeg"}], [{input_position, "00:10:00"}]), % TODO
+  OptionsStr = gen_options(Movie, Output, Options, [{yes, true}, {duration, 1}, {output_format, "mjpeg"}], [{input_position, "00:10:00"}]),
   ScanCommand = FFMpeg ++ OptionsStr,
-  error_logger:error_msg("--------> ~p", [ScanCommand]),
   Result = case ffmpeg_cmd:execute(ScanCommand) of
     {0, _} -> ok;
     {1, Stderr} -> 
@@ -124,7 +135,16 @@ do_transcoding(FFMpeg, Movie, Output, Options) ->
 %% -------------------------------------------------------------------
 
 %% @hidden
-start_trancode([_FFMpeg, _Movie, _Output, _Options]) ->
+start_trancode(FFMpeg, Movie, Output, Options) ->
+  OptionsStr = gen_options(Movie, Output, Options, [{yes, true}], []),
+  ScanCommand = FFMpeg ++ OptionsStr,
+  error_logger:info_msg("COMMAND : ~p", [list_to_bitstring(ScanCommand)]),
+  _Result = case ffmpeg_cmd:execute(ScanCommand) of
+    {0, _} -> ok;
+    {1, Stderr} -> 
+      error_logger:error_msg("COMMAND : ~p~nERROR : ~p", [list_to_bitstring(ScanCommand), list_to_bitstring(Stderr)]),
+      error
+  end,
   % TODO
   ffmpeg:stop_transcode().
 

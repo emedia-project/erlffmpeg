@@ -2,6 +2,28 @@
 
 ffmpeg for Erlang
 
+## Install
+
+> erlFFMpeg depend on ffmpeg and ffprobe (which is part of ffmpeg). For more informations about `ffmpeg` and how to install it, see [http://www.ffmpeg.org](http://www.ffmpeg.org).
+
+    git clone https://github.com/glejeune/erlffmpeg.git
+    cd erlffmpeg
+    make
+
+## Usage
+
+```erlang
+application:start(ffmpeg).
+ffmpeg:set(ffmpeg, "/opt/ffmpeg/bin/ffmpeg").
+ffmpeg:set(ffprobe, "/opt/ffmpeg/bin/ffprobe").
+ffmpeg:to_html5_mp4("/home/greg/video.mov", "/tmp/video.mp4").
+ffmpeg:transcode("/home/greg/video.mov", "/tmp/video.ogv", [
+    {vcodec, "libtheora"}, 
+    {output_acodec, "libvorbis"}, 
+    {output_frame_size, "640x360"}
+  ]).
+```
+
 ## APIs
 
 `ffmpeg:set/2`
@@ -17,6 +39,15 @@ ffmpeg for Erlang
 `ffmpeg:screenshot/2`
 `ffmpeg:screenshot/3`
 : Take a screenshot
+
+`to_html5_webm/2`
+: Convert the given video to webm for HTML5
+
+`to_html5_mp4/2`
+: Convert the given video to mp4 for HTML5
+
+`to_html5_ogg/2`
+: Convert the given video to ogg for HTML5
 
 ## Options
 
