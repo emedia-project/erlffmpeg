@@ -31,7 +31,7 @@
 %% ------------------------------------------------------------------
 
 start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+  gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 set(ffmpeg, Path) ->
   gen_server:call(?SERVER, {ffmpeg, Path});
@@ -81,20 +81,14 @@ handle_call({transcoding}, _From, #ffmpeg{transcoding = Transcoding} = State) ->
 handle_call({stop_transcode}, _From, State) ->
   {reply, ok, State#ffmpeg{transcoding = false}};
 
-handle_call({screenshot, Movie, Output, _Options}, _From, #ffmpeg{ffmpeg_path = FFMpeg} = State) ->
-  ScanCommand = case ucp:detect(Movie) of
-    utf8 -> FFMpeg ++ " -ss 00:10:00 -y -i " ++ " \"" ++ Movie ++ "\" -t 1 -f mjpeg";
-    _ -> FFMpeg ++ " -ss 00:10:00 -y -i " ++ " \"" ++ ucp:to_utf8(Movie) ++ "\" -t 1 -f mjpeg "
-  end,
-  ScanCommand1 = case ucp:detect(Output) of
-    utf8 -> ScanCommand ++ "\"" ++ Output ++ "\"";
-    _ -> ScanCommand ++ "\"" ++ ucp:to_utf8(Output) ++ "\""
-  end,
-  % TODO _Options
-  Result = case ffmpeg_cmd:execute(ScanCommand1) of
+handle_call({screenshot, Movie, Output, Options}, _From, #ffmpeg{ffmpeg_path = FFMpeg} = State) ->
+  OptionsStr = gen_options(Movie, Output, Options, [{yes, true}, {duration, 1}, {output_format, "mjpeg"}], [{input_position, "00:10:00"}]), % TODO
+  ScanCommand = FFMpeg ++ OptionsStr,
+  error_logger:error_msg("--------> ~p", [ScanCommand]),
+  Result = case ffmpeg_cmd:execute(ScanCommand) of
     {0, _} -> ok;
-    {1, Output} -> 
-      lager:info("COMMAND : ~p~nERROR : ~p", [list_to_bitstring(ScanCommand1), list_to_bitstring(Output)]),
+    {1, Stderr} -> 
+      error_logger:error_msg("COMMAND : ~p~nERROR : ~p", [list_to_bitstring(ScanCommand), list_to_bitstring(Stderr)]),
       error
   end,
   {reply, Result, State};
@@ -137,4 +131,40 @@ start_trancode([_FFMpeg, _Movie, _Output, _Options]) ->
 %% @hidden
 stop_transcode() ->
   gen_server:call(?SERVER, {stop_transcode}).
+
+gen_options(Input, Output, Options, OverwriteOptions, MissingOptions) ->
+  Options1 = kv_merge(Options, OverwriteOptions),
+  Options2 = kv_merge(MissingOptions, Options1),
+  gen_options(Input, Output, Options2).
+gen_options(Input, Output, Options) ->
+  [
+    {input, InputOptions}, 
+    {output, OutputOptions}, 
+    {global, GlobalOptions}
+  ] = ffmpeg_options:options(Options),
+  GlobalOptions ++
+  InputOptions ++
+  input(Input) ++
+  OutputOptions ++
+  output(Output).
+
+kv_merge(KV1, KV2) ->
+  lists:foldl(fun({Key, _} = E, KV) ->
+      case lists:keysearch(Key, 1, KV) of
+        {value, _} -> lists:keyreplace(Key, 1, KV, E);
+        false -> KV ++ [E]
+      end
+    end, KV1, KV2).
+
+input(File) ->
+  " -i " ++ encode_filename(File).
+
+output(File) ->
+  " " ++ encode_filename(File).
+
+encode_filename(File) ->
+  case ucp:detect(File) of
+    utf8 -> "\"" ++ File ++ "\"";
+    _ -> "\"" ++ ucp:to_utf8(File) ++ "\""
+  end.
 
