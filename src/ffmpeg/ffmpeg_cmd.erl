@@ -11,11 +11,11 @@ execute(Cmd) ->
 get_cmd_data(P, D) ->
   receive
     {P, {data, D1}} ->
-      get_cmd_data(P, [D|D1]);
+      get_cmd_data(P, D ++ D1);
     {P, eof} ->
       port_close(P),
       receive
         {P, {exit_status, N}} ->
-          {N, lists:reverse(D)}
+          {N, D}
       end
   end.

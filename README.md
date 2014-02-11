@@ -24,6 +24,54 @@ ffmpeg:transcode("/home/greg/video.mov", "/tmp/video.ogv", [
   ]).
 ```
 
+`ffmpeg:infos/1` usage :
+
+```erlang
+1> application:start(ffmpeg).
+ok
+2> rr("include/*").
+[ffmpeg,ffmpeg_format_info,ffmpeg_movie_info,
+ ffmpeg_stream_disposition_info,ffmpeg_stream_info]
+3> ffmpeg:infos("test.mp4").
+#ffmpeg_movie_info{streams = [#ffmpeg_stream_info{index = 0,
+                                                  codec_name = <<"h264">>,
+                                                  codec_long_name = <<"H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10">>,
+                                                  codec_type = <<"video">>,codec_time_base = <<"1/30">>,
+                                                  codec_tag_string = <<"avc1">>,codec_tag = <<"0x31637661">>,
+                                                  profile = <<"High">>,width = 640,height = 360,
+                                                  has_b_frames = 2,sample_aspect_ratio = <<"60:71">>,
+                                                  display_aspect_ratio = <<"320:213">>,
+                                                  pix_fmt = <<"yuv420p">>,level = 22,sample_fmt = undefined,
+                                                  sample_rate = undefined,channels = undefined,
+                                                  channel_layout = undefined,bits_per_sample = undefined,
+                                                  r_frame_rate = <<"15/1">>,avg_frame_rate = <<"15/1">>,
+                                                  time_base = <<"1/15360">>,start_pts = 0,
+                                                  start_time = <<...>>,...},
+                              #ffmpeg_stream_info{index = 1,codec_name = <<"aac">>,
+                                                  codec_long_name = <<"AAC (Advanced Audio Coding)">>,
+                                                  codec_type = <<"audio">>,codec_time_base = <<"1/44100">>,
+                                                  codec_tag_string = <<"mp4a">>,codec_tag = <<"0x6134706d">>,
+                                                  profile = undefined,width = undefined,height = undefined,
+                                                  has_b_frames = undefined,sample_aspect_ratio = undefined,
+                                                  display_aspect_ratio = undefined,pix_fmt = undefined,
+                                                  level = undefined,sample_fmt = <<"fltp">>,
+                                                  sample_rate = <<"44100">>,channels = 2,
+                                                  channel_layout = <<"stereo">>,bits_per_sample = 0,
+                                                  r_frame_rate = <<"0/0">>,avg_frame_rate = <<"0/0">>,
+                                                  time_base = <<"1/44"...>>,start_pts = 16670,...}],
+                   format = #ffmpeg_format_info{filename = <<"test.mp4">>,
+                                                nb_streams = 2,nb_programs = 0,
+                                                format_name = <<"mov,mp4,m4a,3gp,3g2,mj2">>,
+                                                format_long_name = <<"QuickTime / MOV">>,
+                                                start_time = <<"0.000000">>,duration = <<"6.000000">>,
+                                                size = <<"534406">>,bit_rate = <<"712541">>,
+                                                probe_score = 100,
+                                                tags = [{<<"major_brand">>,<<"isom">>},
+                                                        {<<"minor_version">>,<<"512">>},
+                                                        {<<"compatible_brands">>,<<"isomiso2avc1mp41">>},
+                                                        {<<"encoder">>,<<"Lavf55.19.104">>}]}}
+```
+
 ## APIs
 
 `ffmpeg:set/2`

@@ -84,8 +84,8 @@ handle_call({infos, Movie}, _From, #ffmpeg{ffprob_path = FFProbe} = State) ->
     _ -> FFProbe ++ " " ++ ?FFPROBE_OPTIONS ++ " \"" ++ ucp:to_utf8(Movie) ++ "\""
   end,
   {_RCod, FileInfo} = ffmpeg_cmd:execute(ScanCommand), % TODO
-  _J = jsx:decode(FileInfo),
-  {reply, ok, State};
+  J = jsx:decode(list_to_binary(FileInfo)),
+  {reply, ffmpeg_rec:to_rec(J), State};
 
 handle_call({transcoding}, _From, #ffmpeg{transcoding = Transcoding} = State) ->
   {reply, Transcoding, State};
