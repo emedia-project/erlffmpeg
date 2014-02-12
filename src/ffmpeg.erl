@@ -2,6 +2,7 @@
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).
 -include("../include/ffmpeg.hrl").
+-define(DEC(X), $0 + X div 10, $0 + X rem 10).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -76,16 +77,10 @@ init(_Args) ->
 handle_call({ffmpeg, Path}, _From, State) ->
     {reply, ok, State#ffmpeg{ffmpeg_path = Path}};
 handle_call({ffprobe, Path}, _From, State) ->
-    {reply, ok, State#ffmpeg{ffprob_path = Path}};
+    {reply, ok, State#ffmpeg{ffprobe_path = Path}};
 
-handle_call({infos, Movie}, _From, #ffmpeg{ffprob_path = FFProbe} = State) ->
-  ScanCommand = case ucp:detect(Movie) of
-    utf8 -> FFProbe ++ " " ++ ?FFPROBE_OPTIONS ++ " \"" ++ Movie ++ "\"";
-    _ -> FFProbe ++ " " ++ ?FFPROBE_OPTIONS ++ " \"" ++ ucp:to_utf8(Movie) ++ "\""
-  end,
-  {_RCod, FileInfo} = ffmpeg_cmd:execute(ScanCommand), % TODO
-  J = jsx:decode(list_to_binary(FileInfo)),
-  {reply, ffmpeg_rec:to_rec(J), State};
+handle_call({infos, Movie}, _From, #ffmpeg{ffprobe_path = FFProbe} = State) ->
+  {reply, get_movie_info(Movie, FFProbe), State};
 
 handle_call({transcoding}, _From, #ffmpeg{transcoding = Transcoding} = State) ->
   {reply, Transcoding, State};
@@ -93,8 +88,15 @@ handle_call({transcoding}, _From, #ffmpeg{transcoding = Transcoding} = State) ->
 handle_call({stop_transcode}, _From, State) ->
   {reply, ok, State#ffmpeg{transcoding = false}};
 
-handle_call({screenshot, Movie, Output, Options}, _From, #ffmpeg{ffmpeg_path = FFMpeg} = State) ->
-  OptionsStr = gen_options(Movie, Output, Options, [{yes, true}, {duration, 1}, {output_format, "mjpeg"}], [{input_position, "00:10:00"}]),
+handle_call({screenshot, Movie, Output, Options}, _From, #ffmpeg{ffmpeg_path = FFMpeg, ffprobe_path = FFProbe} = State) ->
+  #ffmpeg_movie_info{format = #ffmpeg_format_info{duration = Duration}} = get_movie_info(Movie, FFProbe),
+  SS = trunc(list_to_float(binary_to_list(Duration))/2),
+  HH = trunc(SS / 3600),
+  SS1 = SS - (HH * 3600),
+  MM = trunc(SS1 / 60),
+  SS2 = SS1 - (MM * 60),
+  InputPosition = [?DEC(HH), $:, ?DEC(MM), $:, ?DEC(SS2)],
+  OptionsStr = gen_options(Movie, Output, Options, [{yes, true}, {duration, 1}, {output_format, "mjpeg"}], [{input_position, InputPosition}]),
   ScanCommand = FFMpeg ++ OptionsStr,
   Result = case ffmpeg_cmd:execute(ScanCommand) of
     {0, _} -> ok;
@@ -129,6 +131,15 @@ code_change(_OldVsn, State, _Extra) ->
 
 do_transcoding(FFMpeg, Movie, Output, Options) ->
   spawn_link(ffmpeg, start_trancode, [FFMpeg, Movie, Output, Options]).
+
+get_movie_info(Movie, FFProbe) ->
+  ScanCommand = case ucp:detect(Movie) of
+    utf8 -> FFProbe ++ " " ++ ?FFPROBE_OPTIONS ++ " \"" ++ Movie ++ "\"";
+    _ -> FFProbe ++ " " ++ ?FFPROBE_OPTIONS ++ " \"" ++ ucp:to_utf8(Movie) ++ "\""
+  end,
+  {_RCod, FileInfo} = ffmpeg_cmd:execute(ScanCommand), % TODO
+  J = jsx:decode(list_to_binary(FileInfo)),
+  ffmpeg_rec:to_rec(J).
 
 %% -------------------------------------------------------------------
 %% Public hidden fonctions
