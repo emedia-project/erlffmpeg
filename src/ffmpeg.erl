@@ -3,6 +3,7 @@
 -define(SERVER, ?MODULE).
 -include("../include/ffmpeg.hrl").
 -define(DEC(X), $0 + X div 10, $0 + X rem 10).
+-define(FFPROBE_OPTIONS, "-v quiet -print_format json -show_format -show_streams").
 
 %% ------------------------------------------------------------------
 %% API Function Exports
