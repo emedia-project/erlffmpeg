@@ -7,3 +7,6 @@ erl_crash.dump
 doc
 log
 *.png
+.erlang.mk/
+.rebar/
+erlffmpeg.d

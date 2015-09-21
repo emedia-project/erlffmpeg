@@ -1,30 +1,24 @@
-REBAR=$(shell which rebar || echo ./rebar)
+PROJECT = erlffmpeg
 
-all: compile
+DEPS = lager ucp jsx edown
+dep_lager = git https://github.com/basho/lager.git master
+dep_ucp = git https://github.com/glejeune/UnicodeCodePoints.git master
+dep_jsx = git https://github.com/talentdeficit/jsx.git master
+dep_edown = git https://github.com/homeswap/edown.git master
 
-get-deps:
-	@$(REBAR) get-deps
-	@$(REBAR) check-deps
+include erlang.mk
 
-compile: get-deps
-	@$(REBAR) compile
+ERLC_OPTS = +debug_info +'{parse_transform, lager_transform}'
 
-tests: compile
-	@$(REBAR) eunit skip_deps=true
+EDOC_OPTS = {doclet, edown_doclet} \
+						, {app_default, "http://www.erlang.org/doc/man"} \
+						, {source_path, ["src"]} \
+						, {overview, "overview.edoc"} \
+						, {stylesheet, ""} \
+						, {image, ""} \
+						, {edown_target, github} \
+						, {top_level_readme, {"./README.md", "https://github.com/emedia-project/erlffmpeg"}} 
 
-clean:
-	@$(REBAR) clean
-	rm -f erl_crash.dump
+dev: deps app
+	@erl -pa ebin include deps/*/ebin deps/*/include 
 
-realclean: clean
-	@$(REBAR) delete-deps
-
-gen-doc: clean-doc
-	@mkdir doc
-	@$(REBAR) doc skip_deps=true
-
-clean-doc: 
-	@rm -rf doc
-
-dev: compile
-	@erl -pa ebin include deps/*/ebin deps/*/include apps/*/ebin apps/*/include 
