@@ -63,7 +63,7 @@ to_html5_webm(Input, Output) ->
   transcode(Input, Output, [{output_format, "webm"}, {vcodec, "libvpx"}, {output_acodec, "libvorbis"}, {output_frame_size, "640x360"}]).
 
 to_html5_mp4(Input, Output) ->
-  transcode(Input, Output, [{output_format, "mp4"}, {vcodec, "libx264"}, {output_acodec, "libfaac"}, {output_frame_size, "640x360"}]).
+  transcode(Input, Output, [{output_format, "mp4"}, {vcodec, "libx264"}, {output_acodec, "libfaac"}, {output_frame_size, "640x360"}]). % -movflags faststart
 
 to_html5_ogg(Input, Output) ->
   transcode(Input, Output, [{vcodec, "libtheora"}, {output_acodec, "libvorbis"}, {output_frame_size, "640x360"}]).
