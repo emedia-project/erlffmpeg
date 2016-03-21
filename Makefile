@@ -1,14 +1,14 @@
 PROJECT = erlffmpeg
 
-DEPS = lager ucp jsx edown
-dep_lager = git https://github.com/basho/lager.git master
+DEPS = ucp jsx 
+DOC_DEPS = edown
+
 dep_ucp = git https://github.com/glejeune/UnicodeCodePoints.git master
 dep_jsx = git https://github.com/talentdeficit/jsx.git master
-dep_edown = git https://github.com/homeswap/edown.git master
+
+dep_edown = git https://github.com/uwiger/edown.git master
 
 include erlang.mk
-
-ERLC_OPTS = +debug_info +'{parse_transform, lager_transform}'
 
 EDOC_OPTS = {doclet, edown_doclet} \
 						, {app_default, "http://www.erlang.org/doc/man"} \
